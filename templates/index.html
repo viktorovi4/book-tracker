@@ -1,13 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Book Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>📚 Welcome to Book Tracker</h1>
-    <p>Track your reading journey!</p>
+    <h1>📚 Book Tracker</h1>
+    <p>Отслеживайте свои прочитанные книги!</p>
+    {% if books %}
+        <ul>
+        {% for book in books %}
+            <li>
+                "{{ book.title }}" — {{ book.author }} ({{ book.genre }}), прочитано: {{ book.date_read }}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Пока нет ни одной книги.</p>
+    {% endif %}
+    
+    <p><a href="{{ url_for('add_book') }}">➕ Добавить новую книгу</a></p>    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
