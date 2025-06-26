@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
+from datetime import date
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -27,7 +28,13 @@ def add_book():
         title = request.form['title']
         author = request.form['author']
         genre = request.form['genre']
-        date_read = request.form['date_read']
+        date_read_str = request.form['date_read']
+        
+        # Преобразуем строку в объект date
+        try:
+            date_read = date.fromisoformat(date_read_str)
+        except ValueError:
+            return "Неверный формат даты. Используйте ГГГГ-ММ-ДД.", 400        
 
         new_book = Book(title=title, author=author, genre=genre, date_read=date_read)
         db.session.add(new_book)
