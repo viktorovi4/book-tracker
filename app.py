@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from datetime import date
@@ -43,6 +43,18 @@ def add_book():
         return redirect(url_for('home'))
 
     return render_template('add_book.html')
+
+
+@app.route('/api/books', methods=['GET'])
+def get_books():
+    books = Book.query.all()
+    return jsonify([{
+        'id': book.id,
+        'title': book.title,
+        'author': book.author,
+        'genre': book.genre,
+        'date_read': book.date_read.isoformat()
+    } for book in books])
 
 
 if __name__ == '__main__':
