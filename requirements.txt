@@ -1,6 +1,7 @@
-Flask==3.0.0
-Flask-SQLAlchemy==3.1.1
+Flask==3.1.1
+flask_sqlalchemy==3.1.1
 pytest==8.0.0
-selenium==4.17.2
-requests==2.31.0
-SQLAlchemy         2.0.41
+Requests==2.32.4
+selenium==4.33.0
+webdriver_manager==4.0.2
+SQLAlchemy==2.0.41
