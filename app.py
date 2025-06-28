@@ -34,7 +34,7 @@ def add_book():
         try:
             date_read = date.fromisoformat(date_read_str)
         except ValueError:
-            return "Неверный формат даты. Используйте ГГГГ-ММ-ДД.", 400        
+            return "Неверный формат даты", 400        
 
         new_book = Book(title=title, author=author, genre=genre, date_read=date_read)
         db.session.add(new_book)
