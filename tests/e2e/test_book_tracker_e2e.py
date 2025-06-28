@@ -1,18 +1,31 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
 import pytest
+import tempfile
+import shutil
 
 
 @pytest.fixture
 def browser():
+    temp_dir = tempfile.mkdtemp()  # Создаем временную папку
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument(f"--user-data-dir={temp_dir}")  # Используем её
+    
     service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
     yield driver
+
     driver.quit()
+    shutil.rmtree(temp_dir)  # Чистим за собой
 
 
 def test_add_book(browser):
