@@ -1,0 +1,34 @@
+name: Book Tracker CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Установка Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Установка зависимостей
+      run: |
+        pip install -r requirements.txt
+
+    - name: Запуск Flask-приложения и тестов
+      run: |
+        # Запускаем Flask в фоне
+        python app.py &
+        
+        # Ждём, пока сервер запустится
+        sleep 5
+        
+        # Запускаем тесты
+        pytest tests/
