@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать книгу</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>✏️ Редактировать книгу</h1>
+
+    <form method="post">
+        <label for="title">Название:</label><br>
+        <input type="text" name="title" value="{{ book.title }}" required><br><br>
+
+        <label for="author">Автор:</label><br>
+        <input type="text" name="author" value="{{ book.author }}" required><br><br>
+
+        <label for="genre">Жанр:</label><br>
+        <input type="text" name="genre" value="{{ book.genre }}" required><br><br>
+
+        <label for="date_read">Дата прочтения:</label><br>
+        <input type="date" name="date_read" value="{{ book.date_read.isoformat() }}" required><br><br>
+
+        <button type="submit">Сохранить изменения</button>
+    </form>
+
+    <p><a href="{{ url_for('home') }}">← Назад к списку книг</a></p>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

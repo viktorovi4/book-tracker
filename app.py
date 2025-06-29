@@ -5,6 +5,8 @@ from datetime import date
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///books.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
@@ -55,6 +57,35 @@ def get_books():
         'genre': book.genre,
         'date_read': book.date_read.isoformat()
     } for book in books])
+
+
+@app.route('/delete/<int:id>', methods=['GET', 'POST'])
+def delete_book(id):
+    book_to_delete = Book.query.get_or_404(id)
+    db.session.delete(book_to_delete)
+    db.session.commit()
+    return redirect(url_for('home'))
+
+
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit_book(id):
+    book = Book.query.get_or_404(id)
+
+    if request.method == 'POST':
+        book.title = request.form['title']
+        book.author = request.form['author']
+        book.genre = request.form['genre']
+        date_read_str = request.form['date_read']
+
+        try:
+            book.date_read = date.fromisoformat(date_read_str)
+        except ValueError:
+            return "Неверный формат даты", 400
+
+        db.session.commit()
+        return redirect(url_for('home'))
+
+    return render_template('edit_book.html', book=book)
 
 
 if __name__ == '__main__':
