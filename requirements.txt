@@ -5,3 +5,4 @@ Requests==2.32.4
 selenium==4.33.0
 webdriver_manager==4.0.2
 SQLAlchemy==2.0.41
+allure-pytest==2.14.3

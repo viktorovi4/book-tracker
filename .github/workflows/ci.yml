@@ -26,11 +26,11 @@ jobs:
       run: |
         # Запускаем Flask в фоне
         python app.py &
-        
         # Ждём, пока сервер запустится
         sleep 5
-        
-        # Запускаем тесты
+        # Установка Allure для отчётов
+        pip install allure-pytest
+        # Запускаем тесты и сохраняем результаты Allure
         pytest tests/ --alluredir=./allure-results
 
     - name: Upload Allure Results as Artifact
