@@ -3,19 +3,18 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 import pytest
 import tempfile
 import shutil
-import time
+import json
 
 
 @pytest.fixture
 def browser():
     # Создаём временную директорию для профиля Chrome
     temp_dir = tempfile.mkdtemp()
-
     # Настройки браузера
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")  # Запуск без GUI
@@ -23,16 +22,28 @@ def browser():
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument(f"--user-data-dir={temp_dir}")  # Уникальная директория
-
     # Инициализируем драйвер
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
-
     yield driver
-
     # Чистка после теста
     driver.quit()
     shutil.rmtree(temp_dir)
+
+
+def get_books_api(browser):
+    """Получает список книг через API /api/books"""
+    browser.get("http://127.0.0.1:5000/api/books")
+    try:
+        WebDriverWait(browser, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        body_text = browser.find_element(By.TAG_NAME, "body").text
+        return json.loads(body_text)
+    except Exception as e:
+        print("Ошибка при получении /api/books:", str(e))
+        print("Текущий HTML:\n", browser.page_source)
+        raise
 
 
 def test_edit_book(browser):
@@ -43,7 +54,7 @@ def test_edit_book(browser):
     # Открытие главной страницы
     browser.get("http://127.0.0.1:5000")
 
-    # Если книг нет, добавляем тестовую вручную (как в test_add_book)
+    # Если книг нет, добавляем тестовую
     if "Пока нет ни одной книги." in browser.page_source:
         add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить новую книгу")
         add_link.click()
@@ -53,15 +64,18 @@ def test_edit_book(browser):
         browser.find_element(By.NAME, "genre").send_keys("Фантастика")
         browser.execute_script("document.getElementsByName('date_read')[0].value = '2025-06-26'")
         browser.find_element(By.TAG_NAME, "button").click()
-        time.sleep(1)  # Небольшая пауза, чтобы данные точно сохранились
-        browser.get("http://127.0.0.1:5000")
+
+        # Ждём появления книги на главной
+        WebDriverWait(browser, 10).until(
+            EC.text_to_be_present_in_element((By.TAG_NAME, 'body'), "Книга для редактирования")
+        )
 
     # Кликаем по ссылке "Редактировать"
     try:
         edit_link = browser.find_element(By.LINK_TEXT, "✏️ Редактировать")
         edit_link.click()
-    except Exception as e:
-        print("Ошибка при переходе к редактированию:", str(e))
+    except NoSuchElementException:
+        print("Ссылка 'Редактировать' не найдена.")
         print("Текущий URL:", browser.current_url)
         print("HTML страницы:\n", browser.page_source)
         raise
@@ -79,7 +93,7 @@ def test_edit_book(browser):
     genre_input.clear()
     genre_input.send_keys("Научная фантастика")
 
-    # Установка даты через JavaScript (надёжнее)
+    # Установка даты через JavaScript
     browser.execute_script("document.getElementsByName('date_read')[0].value = '2025-07-01'")
 
     # Сохраняем изменения
@@ -89,7 +103,7 @@ def test_edit_book(browser):
     # Возвращаемся на главную
     browser.get("http://127.0.0.1:5000")
 
-    # Ждём появления обновлённой книги
+    # Явное ожидание появления обновлённой книги
     try:
         WebDriverWait(browser, 10).until(
             EC.text_to_be_present_in_element((By.TAG_NAME, 'body'), "Обновлённая книга")
@@ -100,9 +114,27 @@ def test_edit_book(browser):
         print("Исходный HTML:\n", browser.page_source)
         raise
 
-    # Проверяем, что старое название исчезло, а новое присутствует
-    page_source = browser.page_source
-    assert "Обновлённая книга" in page_source
-    assert "Книга для редактирования" not in page_source
-    assert "Старый Автор" not in page_source
-    assert "Фантастика" not in page_source
+    # Найти элемент с обновлённой книгой по заголовку
+    updated_book_element = WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//li[contains(., "Обновлённая книга")]'))
+    )
+    book_text = updated_book_element.text
+
+    # Проверяем наличие новых данных
+    assert "Обновлённая книга" in book_text
+    assert "Новый Автор" in book_text
+    assert "Научная фантастика" in book_text
+
+    # Проверяем отсутствие старых данных
+    assert "Книга для редактирования" not in book_text
+    assert "Старый Автор" not in book_text
+    assert "Фантастика" not in book_text
+
+    # Проверка через API (необязательно, но полезно для дебага)
+    books = get_books_api(browser)
+    first_book = books[0]
+
+    assert first_book["title"] == "Обновлённая книга"
+    assert first_book["author"] == "Новый Автор"
+    assert first_book["genre"] == "Научная фантастика"
+    assert first_book["date_read"] == "2025-07-01"
