@@ -33,8 +33,14 @@ jobs:
         # Запускаем тесты
         pytest tests/ --alluredir=./allure-results
 
-    - name: Опубликовать Allure отчет
-      uses: qiniu/allure-report-github-action@v1
+    - name: Upload Allure Results as Artifact
+      uses: actions/upload-artifact@v4
       with:
-        allure-results-path: allure-results
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        name: allure-results
+        path: allure-results/
+        if-no-files-found: ignore
+
+    - name: Serve Allure Report
+      run: |
+        mkdir -p allure-report
+        echo "Allure report will be available as artifact."
