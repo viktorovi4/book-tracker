@@ -1,5 +1,7 @@
 # Book Tracker
 
+![Build](https://github.com/viktorovi4/book-tracker/actions/workflows/ci.yml/badge.svg)
+
 Простое веб-приложение для отслеживания прочитанных книг.
 
 ## Установка

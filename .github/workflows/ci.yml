@@ -31,4 +31,10 @@ jobs:
         sleep 5
         
         # Запускаем тесты
-        pytest tests/
+        pytest tests/ --alluredir=./allure-results
+
+    - name: Опубликовать Allure отчет
+      uses: qiniu/allure-report-github-action@v1
+      with:
+        allure-results-path: allure-results
+        github-token: ${{ secrets.GITHUB_TOKEN }}
