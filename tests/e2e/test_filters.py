@@ -1,9 +1,10 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import pytest
 import requests
+import time
 
 
 @pytest.fixture
@@ -13,33 +14,39 @@ def clear_books():
         response = requests.get("http://127.0.0.1:5000/delete_all")
         if response.status_code != 200:
             raise Exception("Не удалось очистить книги")
+        time.sleep(0.5)  # Даем время на обработку
     return _clear_books
 
 
-def add_test_books(browser):
-    """Вспомогательная функция для добавления тестовых книг"""
-    # Добавляем первую книгу
+def add_test_book(browser, title, author, genre, date_read):
+    """Вспомогательная функция для добавления одной книги"""
     browser.get("http://127.0.0.1:5000/add")
-    browser.find_element(By.NAME, "title").send_keys("Книга 1")
-    browser.find_element(By.NAME, "author").send_keys("Автор 1")
-    browser.find_element(By.NAME, "genre").send_keys("Фантастика")
-    browser.execute_script("document.getElementsByName('date_read')[0].value = '2025-06-28'")
-    browser.find_element(By.TAG_NAME, "button").click()
-
-    # Добавляем вторую книгу
-    browser.get("http://127.0.0.1:5000/add")
-    browser.find_element(By.NAME, "title").send_keys("Книга 2")
-    browser.find_element(By.NAME, "author").send_keys("Автор 2")
-    browser.find_element(By.NAME, "genre").send_keys("Научная фантастика")
-    browser.execute_script("document.getElementsByName('date_read')[0].value = '2025-06-29'")
-    browser.find_element(By.TAG_NAME, "button").click()
+    try:
+        WebDriverWait(browser, 10).until(
+            EC.presence_of_element_located((By.NAME, "title"))
+        )
+        
+        browser.find_element(By.NAME, "title").send_keys(title)
+        browser.find_element(By.NAME, "author").send_keys(author)
+        browser.find_element(By.NAME, "genre").send_keys(genre)
+        browser.execute_script(f"document.getElementsByName('date_read')[0].value = '{date_read}'")
+        browser.find_element(By.TAG_NAME, "button").click()
+        
+        # Ждем редиректа на главную
+        WebDriverWait(browser, 10).until(
+            EC.url_to_be("http://127.0.0.1:5000/"))
+    except (TimeoutException, NoSuchElementException) as e:
+        print("Ошибка при добавлении книги:", e)
+        print("Текущий URL:", browser.current_url)
+        print("HTML:\n", browser.page_source)
+        raise
 
 
 def wait_for_page_load(browser, timeout=10):
     """Ожидание загрузки страницы"""
     try:
         WebDriverWait(browser, timeout).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
+            lambda d: d.execute_script("return document.readyState") == "complete"
         )
     except TimeoutException:
         print("Ошибка: Страница не загрузилась за", timeout, "секунд.")
@@ -54,7 +61,8 @@ def test_filter_books_by_genre(clear_books, browser):
     """
     # Очищаем и добавляем тестовые данные
     clear_books()
-    add_test_books(browser)
+    add_test_book(browser, "Книга 1", "Автор 1", "Фантастика", "2025-06-28")
+    add_test_book(browser, "Книга 2", "Автор 2", "Научная фантастика", "2025-06-29")
 
     # Применяем фильтр
     browser.get("http://127.0.0.1:5000?genre=Фантастика")
@@ -78,7 +86,8 @@ def test_filter_books_by_author(clear_books, browser):
     """
     # Очищаем и добавляем тестовые данные
     clear_books()
-    add_test_books(browser)
+    add_test_book(browser, "Книга 1", "Автор 1", "Фантастика", "2025-06-28")
+    add_test_book(browser, "Книга 2", "Автор 2", "Научная фантастика", "2025-06-29")
 
     # Применяем фильтр
     browser.get("http://127.0.0.1:5000?author=Автор 1")
@@ -102,7 +111,8 @@ def test_clear_filter(clear_books, browser):
     """
     # Очищаем и добавляем тестовые данные
     clear_books()
-    add_test_books(browser)
+    add_test_book(browser, "Книга 1", "Автор 1", "Фантастика", "2025-06-28")
+    add_test_book(browser, "Книга 2", "Автор 2", "Научная фантастика", "2025-06-29")
 
     # Сначала применяем фильтр
     browser.get("http://127.0.0.1:5000?genre=Фантастика")
