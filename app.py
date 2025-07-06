@@ -20,7 +20,17 @@ class Book(db.Model):
 
 @app.route('/')
 def home():
-    books = Book.query.all()
+    genre_filter = request.args.get('genre')
+    author_filter = request.args.get('author')
+
+    query = Book.query
+
+    if genre_filter:
+        query = query.filter(Book.genre == genre_filter)
+    if author_filter:
+        query = query.filter(Book.author == author_filter)
+
+    books = query.all()
     return render_template('index.html', books=books)
 
 
@@ -67,6 +77,13 @@ def delete_book(id):
     return redirect(url_for('home'))
 
 
+@app.route('/delete_all', methods=['GET', 'POST'])
+def delete_all_books():
+    Book.query.delete()
+    db.session.commit()
+    return redirect(url_for('home'))
+
+
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit_book(id):
     book = Book.query.get_or_404(id)
@@ -86,6 +103,22 @@ def edit_book(id):
         return redirect(url_for('home'))
 
     return render_template('edit_book.html', book=book)
+
+
+@app.route('/')
+def index():
+    genre_filter = request.args.get('genre')
+    author_filter = request.args.get('author')
+
+    query = Book.query
+
+    if genre_filter:
+        query = query.filter(Book.genre == genre_filter)  # Точное совпадение
+    if author_filter:
+        query = query.filter(Book.author == author_filter)
+
+    books = query.all()
+    return render_template('index.html', books=books)
 
 
 if __name__ == '__main__':
