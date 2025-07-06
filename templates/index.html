@@ -9,6 +9,20 @@
     <h1>📚 Book Tracker</h1>
     <p>Отслеживайте свои прочитанные книги!</p>
 
+    <h2>🔍 Фильтры</h2>
+    <form method="get" action="/">
+        <label for="genre">Жанр:</label>
+        <input type="text" name="genre" value="{{ request.args.get('genre') }}">
+        
+        <label for="author">Автор:</label>
+        <input type="text" name="author" value="{{ request.args.get('author') }}">
+    
+        <button type="submit">Применить</button>
+        {% if request.args %}
+        <a href="/">Сбросить фильтр</a>
+        {% endif %}
+    </form>
+
     {% if books %}
         <ul>
         {% for book in books %}
