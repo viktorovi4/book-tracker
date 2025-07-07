@@ -13,34 +13,37 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Установка Python
+    - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    - name: Установка зависимостей
+    - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install pytest pytest-cov allure-pytest
 
-    - name: Запуск Flask-приложения и тестов
+    - name: Run tests
       run: |
-        # Запускаем Flask в фоне
-        python app.py &
-        # Ждём, пока сервер запустится
+        # Установка переменной окружения для Python
+        export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE
+        
+        # Запуск Flask в фоне с тестовой БД
+        python -m book_tracker.app &
+        
+        # Ждем запуска сервера
         sleep 5
-        # Установка Allure для отчётов
-        pip install allure-pytest
-        # Запускаем тесты и сохраняем результаты Allure
-        pytest tests/ --alluredir=./allure-results
+        
+        # Запуск тестов
+        pytest tests/ --cov=book_tracker --alluredir=./allure-results
+        
+        # Остановка Flask
+        pkill -f "python -m book_tracker.app"
 
-    - name: Upload Allure Results as Artifact
+    - name: Upload Allure Results
       uses: actions/upload-artifact@v4
       with:
         name: allure-results
         path: allure-results/
         if-no-files-found: ignore
-
-    - name: Serve Allure Report
-      run: |
-        mkdir -p allure-report
-        echo "Allure report will be available as artifact."

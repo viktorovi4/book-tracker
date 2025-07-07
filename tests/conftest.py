@@ -3,8 +3,15 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import pytest
+import sys
+import os
+from pathlib import Path
+# Добавляем корень проекта в PYTHONPATH
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from book_tracker import create_app
 from book_tracker.extensions import db
+
 
 @pytest.fixture(scope='session')
 def app():
