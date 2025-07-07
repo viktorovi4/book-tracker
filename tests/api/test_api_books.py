@@ -1,21 +1,24 @@
-import requests
-import json
+import pytest
+from book_tracker import create_app
+from book_tracker.extensions import db
 
-
-BASE_URL = "http://127.0.0.1:5000"
-
-
-def test_get_books_returns_json():
-    response = requests.get(f"{BASE_URL}/api/books")
+@pytest.fixture
+def client():
+    app = create_app()
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     
-    # Проверяем статус-код
+    with app.test_client() as client:
+        with app.app_context():
+            db.create_all()
+        yield client
+
+def test_get_books_returns_json(client):  # Теперь client передается как аргумент
+    response = client.get('/api/books')
     assert response.status_code == 200
-    
-    # Проверяем, что ответ в формате JSON
     assert response.headers['Content-Type'] == 'application/json'
     
-    # Парсим JSON
-    data = response.json()
+    data = response.get_json()
     
     # Проверяем, что это список
     assert isinstance(data, list)
