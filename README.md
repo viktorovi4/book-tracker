@@ -47,7 +47,7 @@ GET `/api/books` — возвращает список всех книг в фо
 | E2E | Добавление книги через браузер | `tests/e2e/test_book_tracker_e2e.py` |
 | Негативные сценарии | Проверка работы формы с пустыми полями | `tests/e2e/test_negative_scenarios.py` |
 | Удаление | Проверка функции удаления | `tests/e2e/test_delete_book.py` |
-
+| Работа с БД | CRUD-операции и транзакции | `tests/unit/test_db_operations.py` |
 Запуск тестов:   
  ```
 pytest
