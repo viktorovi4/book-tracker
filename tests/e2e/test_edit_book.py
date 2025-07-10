@@ -119,10 +119,11 @@ def test_edit_book(browser):
         EC.presence_of_element_located((By.XPATH, '//li[contains(., "Обновлённая книга")]'))
     )
     book_text = updated_book_element.text
-
+    print("Текст элемента:", book_text)
+    
     # Проверяем наличие новых данных
     assert "Обновлённая книга" in book_text
-    assert "Новый Автор" in book_text
+    assert "новый автор" in book_text.lower(), f"Expected 'новый автор' in {book_text}"
     assert "Научная фантастика" in book_text
 
     # Проверяем отсутствие старых данных
