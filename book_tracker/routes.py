@@ -81,13 +81,24 @@ def init_routes(app):
         flash('Все книги удалены!', 'warning')
         return redirect(url_for('home'))
 
-    @app.route('/api/books', methods=['GET'])
+
+    @app.route('/api/books', methods=['GET', 'POST'])
     def get_books():
+        if request.method == 'POST':
+            try:
+                data = request.get_json()
+                new_book = Book(
+                    title=data['title'],
+                    author=data['author'],
+                    genre=data['genre'],
+                    date_read=date.fromisoformat(data['date_read'])
+                )
+                db.session.add(new_book)
+                db.session.commit()
+                return jsonify(new_book.to_dict()), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 400
+
         books = Book.query.all()
-        return jsonify([{
-            'id': book.id,
-            'title': book.title,
-            'author': book.author,
-            'genre': book.genre,
-            'date_read': book.date_read.isoformat()
-        } for book in books])
+        return jsonify([book.to_dict() for book in books])
