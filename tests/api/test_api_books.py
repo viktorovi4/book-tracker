@@ -35,3 +35,21 @@ def test_api_returns_404_for_nonexistent_book(client):
     """Проверяет, что при запросе несуществующей книги возвращается 404"""
     response = client.get('/api/books/99999')
     assert response.status_code == 404
+
+def test_add_book_via_api(client):
+    """POST /api/books — добавление новой книги"""
+    new_book_data = {
+        "title": "API Книга",
+        "author": "API Автор",
+        "genre": "Фантастика",
+        "date_read": "2025-06-28"
+    }
+    response = client.post('/api/books', json=new_book_data)
+    assert response.status_code == 201
+    assert response.headers['Content-Type'] == 'application/json'
+
+    data = response.get_json()
+    assert data['title'] == new_book_data['title']
+    assert data['author'] == new_book_data['author']
+    assert data['genre'] == new_book_data['genre']
+    assert data['date_read'] == new_book_data['date_read']
