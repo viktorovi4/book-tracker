@@ -83,3 +83,27 @@ def test_update_book_via_api(client):
     assert data['author'] == updated_data['author']
     assert data['genre'] == updated_data['genre']
     assert data['date_read'] == updated_data['date_read']
+
+def test_delete_book_via_api(client):
+    """DELETE /api/books/<id> — удаление книги по ID"""
+    # Сначала добавляем книгу через API
+    add_response = client.post('/api/books', json={
+        "title": "Книга для удаления",
+        "author": "Тестовый Автор",
+        "genre": "Боевик",
+        "date_read": "2025-06-28"
+    })
+    assert add_response.status_code == 201
+    book_id = add_response.get_json()['id']
+
+    # Удаляем её через API
+    delete_response = client.delete(f'/api/books/{book_id}')
+    assert delete_response.status_code == 200
+    assert delete_response.headers['Content-Type'] == 'application/json'
+
+    data = delete_response.get_json()
+    assert data['message'] == f'Книга с ID {book_id} успешно удалена'
+
+    # Проверяем, что книга больше не существует
+    get_response = client.get(f'/api/books/{book_id}')
+    assert get_response.status_code == 404
