@@ -13,17 +13,15 @@ def client():
             db.create_all()
         yield client
 
-def test_get_books_returns_json(client):  # Теперь client передается как аргумент
+def test_get_books_returns_json(client):
+    """GET /api/books — получение списка книг в формате JSON"""
     response = client.get('/api/books')
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'application/json'
-    
     data = response.get_json()
-    
-    # Проверяем, что это список
     assert isinstance(data, list)
-    
-    # Если в БД есть книги, проверяем поля
+
+    # Если есть данные, проверяем структуру
     if data:
         first_book = data[0]
         assert 'id' in first_book
@@ -31,3 +29,9 @@ def test_get_books_returns_json(client):  # Теперь client передает
         assert 'author' in first_book
         assert 'genre' in first_book
         assert 'date_read' in first_book
+
+
+def test_api_returns_404_for_nonexistent_book(client):
+    """Проверяет, что при запросе несуществующей книги возвращается 404"""
+    response = client.get('/api/books/99999')
+    assert response.status_code == 404
