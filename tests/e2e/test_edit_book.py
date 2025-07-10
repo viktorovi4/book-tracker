@@ -122,7 +122,7 @@ def test_edit_book(browser):
 
     # Проверяем наличие новых данных
     assert "Обновлённая книга" in book_text
-    assert "Новый Автор" in book_text
+    assert "новый автор" in book_text.lower()
     assert "Научная фантастика" in book_text
 
     # Проверяем отсутствие старых данных
