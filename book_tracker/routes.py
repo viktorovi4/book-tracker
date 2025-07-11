@@ -81,13 +81,55 @@ def init_routes(app):
         flash('Все книги удалены!', 'warning')
         return redirect(url_for('home'))
 
-    @app.route('/api/books', methods=['GET'])
+    @app.route('/api/books/<int:id>', methods=['GET'])
+    def get_book(id):
+        book = Book.query.get(id)
+        if not book:
+            return jsonify({"error": "Книга не найдена"}), 404
+        return jsonify(book.to_dict())
+
+    @app.route('/api/books', methods=['GET', 'POST'])
     def get_books():
+        if request.method == 'POST':
+            try:
+                data = request.get_json()
+                new_book = Book(
+                    title=data['title'],
+                    author=data['author'],
+                    genre=data['genre'],
+                    date_read=date.fromisoformat(data['date_read'])
+                )
+                db.session.add(new_book)
+                db.session.commit()
+                return jsonify(new_book.to_dict()), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 400
+
         books = Book.query.all()
-        return jsonify([{
-            'id': book.id,
-            'title': book.title,
-            'author': book.author,
-            'genre': book.genre,
-            'date_read': book.date_read.isoformat()
-        } for book in books])
+        return jsonify([book.to_dict() for book in books])
+    
+    @app.route('/api/books/<int:id>', methods=['PUT'])
+    def update_book(id):
+        book = Book.query.get_or_404(id)
+        data = request.get_json()
+
+        try:
+            book.title = data.get('title', book.title)
+            book.author = data.get('author', book.author)
+            book.genre = data.get('genre', book.genre)
+            if 'date_read' in data:
+                book.date_read = date.fromisoformat(data['date_read'])
+
+            db.session.commit()
+            return jsonify(book.to_dict()), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 400
+        
+    @app.route('/api/books/<int:id>', methods=['DELETE'])
+    def delete_api_book(id):
+        book = Book.query.get_or_404(id)
+        db.session.delete(book)
+        db.session.commit()
+        return jsonify({"message": f"Книга с ID {id} успешно удалена"}), 200
