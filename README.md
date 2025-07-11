@@ -67,6 +67,7 @@ GET `/api/books` — возвращает список всех книг в фо
 | Unit             | Модель Book — валидация даты                | `tests/unit/test_book_model.py`              |
 | Unit             | CRUD операции                               | `tests/unit/test_db_operations.py`           |
 | Unit             | Транзакции и откат                         | `tests/unit/test_db_operations.py`           |
+
 Запуск тестов:   
  ```
 pytest
