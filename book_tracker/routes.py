@@ -1,7 +1,8 @@
 from flask import render_template, request, redirect, url_for, jsonify, flash
-from datetime import date
+from datetime import date, datetime
 from .extensions import db
 from .models import Book
+from collections import defaultdict
 
 
 def init_routes(app):
@@ -18,7 +19,23 @@ def init_routes(app):
             query = query.filter(Book.author == author_filter)
 
         books = query.all()
-        return render_template('index.html', books=books)
+        # Подготовка данных для графика
+        monthly_stats = defaultdict(int)
+        for book in books:
+            month_key = book.date_read.strftime("%Y-%m")  # Группируем по году-месяцу
+            monthly_stats[month_key] += 1
+        
+        # Сортируем по дате и преобразуем в нужный формат
+        chart_labels = []
+        chart_data = []
+        for month in sorted(monthly_stats.keys()):
+            chart_labels.append(datetime.strptime(month, "%Y-%m").strftime("%b %Y"))
+            chart_data.append(monthly_stats[month])
+        
+        return render_template('index.html', 
+                            books=books,
+                            chart_labels=chart_labels,
+                            chart_data=chart_data)
 
     @app.route('/add', methods=['GET', 'POST'])
     def add_book():

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Book Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>📚 Book Tracker</h1>
@@ -23,6 +24,11 @@
         {% endif %}
     </form>
 
+    <!-- График статистики -->
+    <div class="chart-container">
+        <canvas id="booksChart"></canvas>
+    </div>
+
     {% if books %}
         <ul>
         {% for book in books %}
@@ -39,6 +45,72 @@
     {% endif %}
 
     <p><a href="{{ url_for('add_book') }}">➕ Добавить новую книгу</a></p>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Данные для графика -->
+    <script>
+        const chartData = {
+            labels: JSON.parse('{{ chart_labels | tojson | safe }}'),
+            data: JSON.parse('{{ chart_data | tojson | safe }}')
+        };
+    </script>
+
+    <!-- Скрипт для инициализации графика -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('booksChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Книг прочитано',
+                    data: chartData.data,
+                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                    borderColor: 'rgba(41, 128, 185, 1)',
+                    borderWidth: 1,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' книг';
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000
+                }
+            }
+        });
+    });
+    </script>
 </body>
 </html>
