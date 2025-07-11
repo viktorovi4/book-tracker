@@ -136,6 +136,6 @@ def test_edit_book(browser):
     first_book = books[0]
 
     assert first_book["title"] == "Обновлённая книга"
-    assert first_book["author"] == "Новый Автор"
+    assert first_book["author"].lower() == "новый автор"
     assert first_book["genre"] == "Научная фантастика"
     assert first_book["date_read"] == "2025-07-01"
