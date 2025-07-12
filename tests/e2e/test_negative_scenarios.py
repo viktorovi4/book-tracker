@@ -9,7 +9,7 @@ def test_add_book_with_empty_fields(browser):
     browser.get("http://127.0.0.1:5000")
     
     # Перейти на страницу добавления книги
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить новую книгу")
+    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
     add_link.click()
 
     # Отправить форму без заполнения полей
@@ -28,7 +28,7 @@ def test_add_book_with_empty_fields(browser):
 def test_add_book_with_empty_title(browser):
     """Проверяет, что нельзя создать книгу без названия"""
     browser.get("http://127.0.0.1:5000")
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить новую книгу")
+    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
     add_link.click()
 
     # Заполняем все поля, кроме title
@@ -50,7 +50,7 @@ def test_add_book_with_empty_title(browser):
 def test_add_book_with_invalid_date(browser):
     """Проверяет, что нельзя добавить книгу с невалидной датой"""
     browser.get("http://127.0.0.1:5000")
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить новую книгу")
+    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
     add_link.click()
 
     # Заполняем форму с невалидной датой
@@ -68,7 +68,7 @@ def test_add_book_with_invalid_date(browser):
 def test_add_book_with_missing_required_fields(browser):
     """Проверяет, что форма не отправляется, если хотя бы одно поле не заполнено"""
     browser.get("http://127.0.0.1:5000")
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить новую книгу")
+    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
     add_link.click()
 
     # Не заполняем ни одно поле

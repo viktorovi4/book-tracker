@@ -44,7 +44,7 @@ def test_add_book(browser):
 
     # Переход на страницу добавления книги
     try:
-        add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить новую книгу")
+        add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
         add_link.click()
     except Exception as e:
         print("Ошибка при переходе на страницу добавления:", str(e))
