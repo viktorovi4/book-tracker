@@ -10,7 +10,18 @@
 <body>
     <div class="container">
         <h1>✏️ Редактировать книгу</h1>
-        
+
+        <!-- Flash уведомления -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}       
+         
         <form method="post" class="book-form">
             <div class="form-group">
                 <label for="title">Название книги</label>

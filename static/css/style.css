@@ -200,12 +200,10 @@
     margin-bottom: 1.5rem;
     position: relative;
   }
-  
   .alert-success {
     background-color: #d1fae5;
     color: #065f46;
   }
-  
   .alert-error {
     background-color: #fee2e2;
     color: #b91c1c;

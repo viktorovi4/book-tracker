@@ -10,6 +10,18 @@
 </head>
 <body>
     <div class="container">
+            <!-- Flash уведомления -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Основной контент -->
         <h1>📚 Book Tracker</h1>
         <p>Отслеживайте свои прочитанные книги!</p>
 
