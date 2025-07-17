@@ -1,9 +1,10 @@
 from flask import render_template, request, redirect, url_for, jsonify, flash
 from datetime import date, datetime
 from .extensions import db
-from .models import Book
+from .models import Book, User
 from collections import defaultdict
-
+from flask_login import login_user, logout_user, login_required, current_user
+from .forms import RegistrationForm, LoginForm
 
 def init_routes(app):
     @app.route('/')
@@ -150,3 +151,44 @@ def init_routes(app):
         db.session.delete(book)
         db.session.commit()
         return jsonify({"message": f"Книга с ID {id} успешно удалена"}), 200
+    
+    @app.route('/register', methods=['GET', 'POST'])
+    def register():
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
+        form = RegistrationForm()
+        if form.validate_on_submit():
+            existing_user = User.query.filter_by(username=form.username.data).first()
+            if existing_user:
+                flash("Этот логин уже занят", "error")
+                return render_template('register.html', form=form)
+            user = User(username=form.username.data)
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            flash("Вы успешно зарегистрированы!", "success")
+            return redirect(url_for('login'))
+        return render_template('register.html', form=form)
+
+
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
+        form = LoginForm()
+        if form.validate_on_submit():
+            user = User.query.filter_by(username=form.username.data).first()
+            if user is None or not user.check_password(form.password.data):
+                flash("Неверный логин или пароль", "error")
+                return redirect(url_for('login'))
+            login_user(user)
+            flash("Вы вошли в систему", "success")
+            return redirect(url_for('home'))
+        return render_template('login.html', form=form)
+
+
+    @app.route('/logout')
+    def logout():
+        logout_user()
+        flash("Вы вышли из системы", "success")
+        return redirect(url_for('home'))
