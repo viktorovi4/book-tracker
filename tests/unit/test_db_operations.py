@@ -36,7 +36,8 @@ def test_create_book(app):
             title="Тестовая книга",
             author="Тест Автор",
             genre="Фантастика",
-            date_read=date(2023, 1, 1)
+            date_read=date(2023, 1, 1),
+            user_id=1
         )
         db.session.add(book)
         db.session.commit()
@@ -51,7 +52,8 @@ def test_read_book(app):
             title="Тестовая книга",
             author="Тест Автор",
             genre="Фантастика",
-            date_read=date(2023, 1, 1)
+            date_read=date(2023, 1, 1),
+            user_id=1
         )
         db.session.add(book)
         db.session.commit()
@@ -66,7 +68,8 @@ def test_update_book(app):
             title="Тестовая книга",
             author="Тест Автор",
             genre="Фантастика",
-            date_read=date(2023, 1, 1)
+            date_read=date(2023, 1, 1),
+            user_id=1
         )
         db.session.add(book)
         db.session.commit()
@@ -84,7 +87,8 @@ def test_delete_book(app):
             title="Тестовая книга",
             author="Тест Автор",
             genre="Фантастика",
-            date_read=date(2023, 1, 1)
+            date_read=date(2023, 1, 1),
+            user_id=1
         )
         db.session.add(book)
         db.session.commit()
@@ -101,7 +105,8 @@ def test_transaction_rollback(app):
             title="Тестовая книга",
             author="Тест Автор",
             genre="Фантастика",
-            date_read=date(2023, 1, 1)
+            date_read=date(2023, 1, 1),
+            user_id=1
         )
         db.session.add(book)
         db.session.flush()  

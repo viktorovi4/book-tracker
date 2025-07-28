@@ -34,7 +34,8 @@ def test_book_creation(session):
         title="Тестовая книга",
         author="Тест Автор",
         genre="Фантастика",
-        date_read=date(2023, 1, 1)
+        date_read=date(2023, 1, 1),
+        user_id=1
     )
     session.add(book)
     session.commit()

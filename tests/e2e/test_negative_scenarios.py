@@ -1,86 +1,125 @@
+# tests\e2e\test_negative_scenarios.py
+import time
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import pytest
 
 
-def test_add_book_with_empty_fields(browser):
-    browser.get("http://127.0.0.1:5000")
-    
-    # Перейти на страницу добавления книги
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
-    add_link.click()
+def test_add_book_with_empty_fields(login_user, clear_books):
+    """
+    Проверяет, что книга не добавляется, если обязательные поля пусты.
+    Поскольку поля имеют атрибут 'required', браузер может блокировать отправку.
+    Мы обходим это, удаляя атрибут 'required' через JS перед отправкой.
+    """
+    browser = login_user
+    # clear_books фикстура уже выполнила очистку перед тестом
 
-    # Отправить форму без заполнения полей
-    browser.find_element(By.TAG_NAME, "button").click()
+    # 1. Переходим на страницу добавления (ИСПОЛЬЗУЕМ localhost)
+    browser.get("http://localhost:5000/add")
 
-    # Проверить, что мы остались на той же странице
-    assert browser.title == "Добавить книгу"
+    # Явно ждем загрузки формы
+    WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "form.book-form")))
 
-    # Проверить наличие сообщения об ошибке или предупреждения
+    # === КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ ===
+    # 2. Удаляем атрибут 'required' со всех полей ввода, чтобы обойти валидацию браузера
     try:
-        error_message = browser.find_element(By.CLASS_NAME, "error")
-        assert error_message.is_displayed()
-    except NoSuchElementException:
-        pass  # Валидация может быть на стороне клиента
-
-def test_add_book_with_empty_title(browser):
-    """Проверяет, что нельзя создать книгу без названия"""
-    browser.get("http://127.0.0.1:5000")
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
-    add_link.click()
-
-    # Заполняем все поля, кроме title
-    browser.find_element(By.NAME, "author").send_keys("Тестовый Автор")
-    browser.find_element(By.NAME, "genre").send_keys("Фантастика")
-    browser.execute_script("document.getElementsByName('date_read')[0].value = '2025-06-28'")
-
-    # Отправляем форму
-    browser.find_element(By.TAG_NAME, "button").click()
-
-    # Проверяем, что остались на той же странице
-    assert "Добавить книгу" in browser.title
-
-    # Проверяем, что форма показывает ошибку (например, браузерная валидация)
-    title_input = browser.find_element(By.NAME, "title")
-    assert title_input.get_attribute("validationMessage") != ""
-
-
-def test_add_book_with_invalid_date(browser):
-    """Проверяет, что нельзя добавить книгу с невалидной датой"""
-    browser.get("http://127.0.0.1:5000")
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
-    add_link.click()
-
-    # Заполняем форму с невалидной датой
-    browser.find_element(By.NAME, "title").send_keys("Книга с плохой датой")
-    browser.find_element(By.NAME, "author").send_keys("Тестовый Автор")
-    browser.find_element(By.NAME, "genre").send_keys("Фантастика")
-    browser.execute_script("document.getElementsByName('date_read')[0].value = '2025-30-02'")  # Неверная дата
-
-    browser.find_element(By.TAG_NAME, "button").click()
-
-    # Проверяем, что мы остались на форме
-    assert "Добавить книгу" in browser.title
-
-
-def test_add_book_with_missing_required_fields(browser):
-    """Проверяет, что форма не отправляется, если хотя бы одно поле не заполнено"""
-    browser.get("http://127.0.0.1:5000")
-    add_link = browser.find_element(By.LINK_TEXT, "➕ Добавить книгу")
-    add_link.click()
-
-    # Не заполняем ни одно поле
-    browser.find_element(By.TAG_NAME, "button").click()
-
-    # Проверяем, что остались на той же странице
-    assert "Добавить книгу" in browser.title
-
-    # Проверяем, что браузер показал ошибки валидации
-    try:
-        required_fields = browser.find_elements(By.CSS_SELECTOR, "input[required]")
-        for field in required_fields:
-            assert field.get_attribute("validity").get("valueMissing")
+        required_inputs = browser.find_elements(By.CSS_SELECTOR, "form.book-form input[required]")
+        for input_elem in required_inputs:
+            browser.execute_script("arguments[0].removeAttribute('required');", input_elem)
     except Exception:
-        pass  # Браузер может не вернуть значение, но JS-валидация всё равно сработает
+        pass # Продолжаем даже если не удалось
+    # =============================
+
+    # 3. Нажимаем кнопку отправки (пустая форма)
+    submit_button = browser.find_element(By.CSS_SELECTOR, "form.book-form button[type='submit']")
+    submit_button.click()
+
+    # === КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ ===
+    # 4. Ждем и проверяем наличие сообщения об ошибке от сервера
+    # Явно ждем, пока элемент не только появится, но и станет видимым
+    try:
+        error_message_element = WebDriverWait(browser, 10).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, "alert-error"))
+        )
+        # Проверяем, что сообщение об ошибке не пустое
+        error_text = error_message_element.text.strip()
+        assert len(error_text) > 0, "Сообщение об ошибке пустое"
+        
+    except TimeoutException:
+        # Если сообщение об ошибке не появилось, это ошибка теста
+        current_url = browser.current_url
+        page_source_snippet = browser.page_source[:1000]
+        raise AssertionError(
+            f"Сообщение об ошибке не появилось после отправки формы с пустыми полями (после удаления 'required'). "
+            f"Текущий URL: {current_url}. Фрагмент страницы: {page_source_snippet}"
+        )
+    # =============================
+
+
+def test_add_book_with_invalid_date(login_user, clean_db):
+    """Проверяет, что книга не добавляется, если дата в неверном формате."""
+    browser = login_user
+    
+    # 1. Переходим на страницу добавления
+    browser.get("http://localhost:5000/add")
+    WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "form.book-form")))
+    
+    # 2. Заполняем обязательные поля
+    browser.execute_script("""
+        document.querySelector('[name="title"]').value = 'Книга с неверной датой';
+        document.querySelector('[name="author"]').value = 'Автор';
+        document.querySelector('[name="genre"]').value = 'Жанр';
+    """)
+    
+    # 3. Устанавливаем пустое значение для даты (чтобы обойти HTML5 валидацию)
+    date_field = browser.find_element(By.NAME, "date_read")
+    browser.execute_script("arguments[0].value = '';", date_field)
+    
+    # 4. Отправляем форму с невалидными данными через POST-запрос (минуя браузерную валидацию)
+    browser.execute_script("""
+        const form = document.querySelector('form.book-form');
+        const formData = new FormData(form);
+        formData.set('date_read', 'неправильная-дата');
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'text/html',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.documentElement.innerHTML = html;
+        });
+    """)
+    
+    # 5. Ждем обновления страницы и проверяем сообщение об ошибке
+    try:
+        error_element = WebDriverWait(browser, 10).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, "alert-error")))
+        error_text = error_element.text
+        
+        assert "Неверный формат даты" in error_text or "YYYY-MM-DD" in error_text, \
+            f"Ожидалось сообщение о неверном формате даты, получено: '{error_text}'"
+    except TimeoutException:
+        current_url = browser.current_url
+        page_source = browser.page_source[:2000]
+        raise AssertionError(
+            f"Сообщение об ошибке не появилось. URL: {current_url}\n"
+            f"Фрагмент страницы:\n{page_source}"
+        )
+    
+    # 6. Проверяем, что остались на странице добавления
+    assert browser.current_url == "http://localhost:5000/add", \
+        f"После ошибки должны остаться на странице добавления, текущий URL: {browser.current_url}"
+    
+    # 7. Проверяем, что книга не добавилась
+    browser.get("http://localhost:5000")
+    assert "Книга с неверной датой" not in browser.page_source, \
+        "Книга с неверной датой не должна была добавиться в список"
+

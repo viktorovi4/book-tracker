@@ -12,6 +12,7 @@ class Book(db.Model):
     author = db.Column(db.String(100), nullable=False)
     genre = db.Column(db.String(100), nullable=False)
     date_read = db.Column(db.Date, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __init__(self, **kwargs):
         try:
@@ -32,7 +33,8 @@ class Book(db.Model):
             'title': self.title,
             'author': self.author,
             'genre': self.genre,
-            'date_read': self.date_read.isoformat()
+            'date_read': self.date_read.isoformat(),
+            'user_id': self.user_id
         }
 
 
